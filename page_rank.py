@@ -5,20 +5,14 @@ import argparse
 from progress import Progress
 
 
-def load_graph(args):
-    """Load graph from text file
-
-    Parameters:
-    args -- arguments named tuple
-
-    Returns:
-    A dict mapling a URL (str) to a list of target URLs (str).
-    """
-    # Iterate through the file line by line
+def load_graph(args):                                                                          # Load the Graph from Text File
+    graph = {}
     for line in args.datafile:
-        # And split each line into two URLs
-        node, target = line.split()
-        raise RuntimeError("This function is not implemented yet.")
+        node, target = line.strip().split()
+        if node not in graph:
+            graph[node] = []
+        graph[node].append(target)
+    return graph
 
 
 def print_stats(graph):
