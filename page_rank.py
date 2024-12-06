@@ -42,19 +42,32 @@ def stochastic_page_rank(graph, args):
 
 
 def distribution_page_rank(graph, args):
-    """Probabilistic PageRank estimation
+    num_nodes = len(graph)
+    node_prob = {node: 1 / num_nodes for node in graph}
+    
+    # Initialize the progress bar for the distribution algorithm
+    prog = Progress(args.steps, "Running distribution page rank")
+    
+    for step in range(args.steps):
+        next_prob = {node: 0 for node in graph}
+        
+        for node, targets in graph.items():
+            if len(targets) == 0:
+                continue  # Skip nodes with no out-links
+            
+            probability = node_prob[node] / len(targets)
+            for target in targets:
+                next_prob[target] += probability
+        
+        node_prob = next_prob
+        
+        prog += 1  # Update progress bar after each step
+    
+    prog.finish()  # Finish the progress bar
+     
+    return node_prob
 
-    Parameters:
-    graph -- a graph object as returned by load_graph()
-    args -- arguments named tuple
 
-    Returns:
-    A dict that assigns each page its probability to be reached
-
-    This function estimates the Page Rank by iteratively calculating
-    the probability that a random walker is currently on any node.
-    """
-    raise RuntimeError("This function is not implemented yet.")
 
 
 parser = argparse.ArgumentParser(description="Estimates page ranks from link information")
