@@ -1,15 +1,12 @@
-"""A progress bar for the command line"""
 import sys
 import time
 
-
 class Progress:
-    """Progress bar object for the comand line
+    """Progress bar object for the command line
 
-    This class allows to conveniently add progress bars to long running
+    This class allows you to conveniently add progress bars to long-running
     calculations. It writes textual and graphical information about
-    the progress of a text to sys.stderr. To be used in the following
-    way:
+    the progress to sys.stderr. It can be used in the following way:
 
     >>> prog = Progress(100, "Performing some long running task")
     >>> for step in some_long_calculation():
@@ -18,45 +15,58 @@ class Progress:
     >>> prog.finish()
 
     The progress bar displays the percentage of completion
-    (counter/total) and the real time taken by the calculation so far.
-
-    It is allowed to manually alter prog.counter and prog.total during
-    use.
+    (counter/total) and the real-time taken by the calculation so far.
     """
+    
     def __init__(self, total, title="Progress", width=80):
-        """Initialize Progress bar
-
+        """Initialize the Progress bar
+        
         Parameters:
-        total (number) -- maximum value of counter
-        title (str) -- information to be displayed
-        width (int) -- width of the display progress bar
+        total (int) -- Maximum value of the counter (total steps)
+        title (str) -- Information to be displayed alongside the progress bar
+        width (int) -- Width of the display progress bar
         """
-        self.counter = 0
-        self.total = total
-        self.title = title
-        self.width = width
-        self.start_time = time.time()
+        self.counter = 0  # Initialize progress counter to 0
+        self.total = total  # Total value for the counter to reach
+        self.title = title  # Custom title for the progress bar
+        self.width = width  # Width for the progress bar
+        self.start_time = time.time()  # Record the start time for elapsed time tracking
 
     def __iadd__(self, value):
-        """Increase current counter by value"""
-        self.counter += value
+        """Increase the current counter by a specified value
+        
+        Parameters:
+        value (int) -- Value to increment the progress counter by
+        """
+        self.counter += value  # Increase the counter
         return self
 
     def show(self):
-        """Display progress bar in its current state"""
-        sec = time.time()-self.start_time
-        # eta = self.total/self.counter*sec-sec if self.counter else 0
-        percent = 100*self.counter/self.total
+        """Display the progress bar in its current state
+        
+        This method shows the progress percentage and elapsed time, as well as a graphical
+        representation of the progress bar.
+        """
+        sec = time.time() - self.start_time  # Elapsed time since the start of the task
+        percent = 100 * self.counter / self.total  # Calculate completion percentage
+        
+        # Create the title string with the progress information
         title = f'{self.title} ({percent:.0f}% {sec//60:02.0f}:{sec%60:02.0f}) '
+        
+        # Check if the title fits within the progress bar width, raise an error if it doesn't
         if len(title) >= self.width:
-            raise ValueError("Progress bar does not fit width. Shorten title of increase width.")
+            raise ValueError("Progress bar does not fit width. Shorten title or increase width.")
+        
+        # Calculate the width of the progress bar and its current completion
         bar_width = self.width - (len(title)) - 3
-        full_width = int(bar_width*self.counter/self.total)
+        full_width = int(bar_width * self.counter / self.total)
         empty_width = bar_width - full_width
-        sys.stdout.write('\r'+title+'['+full_width*'#'+empty_width*'.'+']')
-        sys.stdout.flush()
+        
+        # Output the progress bar to the console
+        sys.stdout.write('\r' + title + '[' + full_width * '#' + empty_width * '.' + ']')
+        sys.stdout.flush()  # Ensure immediate output to the console
 
     def finish(self):
-        """Hide progress bar"""
-        sys.stdout.write('\r'+self.width*' '+'\r')
+        """Finish the progress bar and clear the line"""
+        sys.stdout.write('\r' + self.width * ' ' + '\r')  # Clear the line after completion
         sys.stdout.flush()
