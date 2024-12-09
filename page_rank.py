@@ -3,19 +3,17 @@ import os
 import time
 import argparse
 from progress import Progress
+from collections import defaultdict 
 import random
 
 
-
-
 def load_graph(args):
-   graph = {}
-   for line in args.datafile:
-       node, target = line.split()
-       if node not in graph:
-           graph[node] = []
-       graph[node].append(target)
-   return graph
+    graph = defaultdict(list)  # Use defaultdict for faster graph creation
+    for line in args.datafile:
+        node, target = line.split()
+        graph[node].append(target)  # Automatically creates a list if the node is new
+    return graph
+
 
 
 def print_stats(graph):

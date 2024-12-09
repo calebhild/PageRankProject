@@ -15,3 +15,7 @@ Once I had the code running how I expected I was ready to start optimising the c
 
 
 Firstly I began by changing the progress.py file by adding a 'frequency' parameter, this will control how often the progress bar updates as at the moment it updates everytime, even when a calculation is very quick. By making these changes the code will now only update the progress bar every 500 steps. This did infact speed up my program however not by a noticable amount, reducing it by about 5 seconds, resulting in a calculation time of 55.60 seconds with 100000 steps. 
+
+Next I used defaultdict(list) instead of a regular dictionary, which automatically initialises an empty list for each key, so you do not need to check whether the node exists or not. The list is automatically created when you do graph[node].append(target). This should help performance as it elimnates the check for each node and automatically creating the list when needed in the load_graph function.
+
+Numeric operations are a huge part of this project, so by speeding it up will reduce the overal calculation time of the project. I will be using a libary called lumpy for Numeric Operations
