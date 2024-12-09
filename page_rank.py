@@ -4,69 +4,85 @@ import time
 import numpy as np
 from scipy.sparse import csr_matrix
 from progress import Progress
-
+'''Comments are placed to the right of each line.'''
 def load_graph(args):
-    nodes = {}  # Map from node to index
-    edges = []  # Store edges as (source, target)
+    """
+    Load the graph from the input file and build a sparse adjacency matrix.
+    """
+    nodes = {}                                                                  # Map from node names to unique indices
+    edges = []                                                                  # List of edges as (source, target) tuples
 
+    # Read edges from the input file
     for line in args.datafile:
         src, tgt = line.split()
         if src not in nodes:
-            nodes[src] = len(nodes)
+            nodes[src] = len(nodes)                                             # Assign a unique index to each source node
         if tgt not in nodes:
-            nodes[tgt] = len(nodes)
-        edges.append((nodes[src], nodes[tgt]))
+            nodes[tgt] = len(nodes)                                             # Assign a unique index to each target node
+        edges.append((nodes[src], nodes[tgt]))                                  # Add edge as indices
 
-    num_nodes = len(nodes)
-    row = np.array([src for src, tgt in edges], dtype=np.int32)
-    col = np.array([tgt for src, tgt in edges], dtype=np.int32)
-    data = np.ones(len(edges), dtype=np.float32)
+    num_nodes = len(nodes)                                                      # Total number of unique nodes
+    row = np.array([src for src, tgt in edges], dtype=np.int32)                 # Source indices
+    col = np.array([tgt for src, tgt in edges], dtype=np.int32)                 # Target indices
+    data = np.ones(len(edges), dtype=np.float32)                                # Edge weights (all 1s for unweighted graph)
 
-    # Build a sparse adjacency matrix
+    # Build the sparse adjacency matrix
     adjacency_matrix = csr_matrix((data, (row, col)), shape=(num_nodes, num_nodes))
     return adjacency_matrix, list(nodes.keys())
 
 def print_stats(graph):
-    num_nodes = graph.shape[0]
-    num_edges = graph.nnz
+    """
+    Print basic stats about the graph.
+    """
+    num_nodes = graph.shape[0]                                                  # Number of nodes (rows in matrix)
+    num_edges = graph.nnz                                                       # Number of edges (non-zero entries in matrix)
     print(f"Number of nodes: {num_nodes}")
     print(f"Number of edges: {num_edges}")
 
 def stochastic_page_rank(graph, args):
-    num_nodes = graph.shape[0]
-    hit_count = np.zeros(num_nodes, dtype=np.int32)
+    """
+    Compute PageRank using the stochastic random walk method.
+    """
+    num_nodes = graph.shape[0]                                                  # Total number of nodes
+    hit_count = np.zeros(num_nodes, dtype=np.int32)                             # Array to count hits for each node
 
     # Perform random walks
     for _ in range(args.repeats):
-        current_node = np.random.randint(0, num_nodes)
-        hit_count[current_node] += 1
+        current_node = np.random.randint(0, num_nodes)                          # Start at a random node
+        hit_count[current_node] += 1                                            # Increment hit count for starting node
         for _ in range(args.steps):
-            if graph[current_node].nnz == 0:  # Dead end
-                current_node = np.random.randint(0, num_nodes)
+            if graph[current_node].nnz == 0:                                    # Dead end: node has no outgoing links
+                current_node = np.random.randint(0, num_nodes)                  # Restart at a random node
             else:
+                # Choose a random outgoing link
                 current_node = np.random.choice(graph[current_node].indices)
-            hit_count[current_node] += 1
+            hit_count[current_node] += 1                                        # Increment hit count for the visited node
 
-    # Normalise hit counts to get probabilities
+    # Normalise hit counts to calculate probabilities
     return hit_count / hit_count.sum()
 
 def distribution_page_rank(graph, args):
-    num_nodes = graph.shape[0]
-    node_prob = np.full(num_nodes, 1 / num_nodes, dtype=np.float32)
-    prog = Progress(args.steps, "Running distribution PageRank")
+    """
+    Compute PageRank using the distribution-based iterative method.
+    """
+    num_nodes = graph.shape[0]                                                  # Total number of nodes
+    node_prob = np.full(num_nodes, 1 / num_nodes, dtype=np.float32)             # Initial uniform probabilities (Each node has an equal chance of being visited)
+    prog = Progress(args.steps, "Running distribution PageRank")                # Progress bar
 
-    # Normalise adjacency matrix rows
-    row_sums = np.array(graph.sum(axis=1)).flatten()
-    row_sums[row_sums == 0] = 1  # Avoid division by zero
-    transition_matrix = csr_matrix(graph.multiply(1 / row_sums[:, None]))
+    # Normalise adjacency matrix rows to create a transition matrix
+    row_sums = np.array(graph.sum(axis=1)).flatten()                            # Sum of outgoing links for each node
+    row_sums[row_sums == 0] = 1                                                 # Avoid division by zero for nodes with no outgoing links
+    transition_matrix = csr_matrix(graph.multiply(1 / row_sums[:, None]))       # Normalise rows
 
+    # Iteratively propagate probabilities
     for _ in range(args.steps):
-        node_prob = transition_matrix.T @ node_prob
-        prog += 1
+        node_prob = transition_matrix.T @ node_prob                             # Update probabilities via matrix multiplication
+        prog += 1                                                               # Update progress bar
 
-    prog.finish()
+    prog.finish()                                                               # Finish the progress bar
     return node_prob
 
+# Command-line argument parsing
 parser = argparse.ArgumentParser(description="Estimates PageRanks from link information")
 parser.add_argument('datafile', nargs='?', type=argparse.FileType('r'), default=sys.stdin,
                     help="Text file of links among web pages as URL tuples")
@@ -77,10 +93,14 @@ parser.add_argument('-s', '--steps', type=int, default=100, help="Number of step
 parser.add_argument('-n', '--number', type=int, default=20, help="Number of top results to display")
 
 if __name__ == '__main__':
+    # Parse command-line arguments
     args = parser.parse_args()
+
+    # Load the graph and print statistics
     graph, node_names = load_graph(args)
     print_stats(graph)
 
+    # Choose the algorithm and run it
     start = time.time()
     if args.method == 'stochastic':
         ranking = stochastic_page_rank(graph, args)
@@ -88,8 +108,9 @@ if __name__ == '__main__':
         ranking = distribution_page_rank(graph, args)
     stop = time.time()
 
-    top = np.argsort(ranking)[::-1]
+    # Display the top ranked nodes
+    top = np.argsort(ranking)[::-1]                                               # Sort nodes by PageRank in descending order
     sys.stderr.write(f"Top {args.number} pages:\n")
     for i in range(args.number):
-        sys.stderr.write(f"{100 * ranking[top[i]]:.2f}\t{node_names[top[i]]}\n")
-    sys.stderr.write(f"Calculation took {stop - start:.2f} seconds.\n")
+        sys.stderr.write(f"{100 * ranking[top[i]]:.2f}\t{node_names[top[i]]}\n") # Print the Top n sited
+    sys.stderr.write(f"Calculation took {stop - start:.2f} seconds.\n")          # Print how long the Calculation took
