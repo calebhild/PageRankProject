@@ -11,7 +11,7 @@ class Progress:
         width (int) -- Width of the display progress bar
         update_frequency (int) -- Frequency of updates to avoid excessive writing
         """
-        self.counter = 0                                 # Initialize progress counter to 0
+        self.counter = 0                                 # Initialise progress counter to 0
         self.total = total                               # Total value for the counter to reach
         self.title = title                               # Custom title for the progress bar
         self.width = width                               # Width for the progress bar
