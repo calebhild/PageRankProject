@@ -4,8 +4,8 @@ import time
 import numpy as np
 from scipy.sparse import csr_matrix
 from progress import Progress
-import multiprocessing
-                                                       # Import for parallel processing
+import multiprocessing                                                      # Import for parallel processing
+
 '''Comments are placed to the right of each line.'''
 
 def load_graph(args):
@@ -92,7 +92,7 @@ def distribution_page_rank(graph, args):
 # Parallelised stochastic PageRank
 def parallel_stochastic_page_rank(graph, args):
     """
-    Compute PageRank using the parallelized stochastic random walk method.
+    Compute PageRank using the parallelised stochastic random walk method.
     """
     num_nodes = graph.shape[0]                                              # Total number of nodes
     hit_count = np.zeros(num_nodes, dtype=np.int32)                         # Array to count hits for each node

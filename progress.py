@@ -3,7 +3,7 @@ import time
 '''Comments are placed to the right of each line.'''
 class Progress:
     def __init__(self, total, title="Progress", width=80, update_frequency=10):
-        """Initialize the Progress bar
+        """Initialise the Progress bar
         
         Parameters:
         total (int) -- Maximum value of the counter (total steps)
